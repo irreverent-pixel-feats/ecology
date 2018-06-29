@@ -1,0 +1,54 @@
+#!/bin/sh -eux
+
+# When I have time i should replace this with a proper haskell app
+
+# This could be done using a Custom Setup.hs file however on Mac OS X
+# system with recent versions of cabal and ghc I have
+# encountered problems with functions like `readProc` where on
+# Linux systems it sometimes segfaults, and on mac os x it just hangs
+# indefinitely...
+#
+# So i have reverted to using only Simple builds with cabal projects,
+# and using a combination of scripts like this and makefiles to produce
+# any codegen i need.
+
+PROJECT_NAME=${1:?"The name of the project..."}
+
+#the format %ci actually returns something like this: 2016-06-04 18:34:59 +1000
+#when correct ISO8601 would look more like: 2016-06-04T18:34:59+1000
+#so it needs to be corrected...
+ISO_SED='s@\(.*\) \(.*\) \(.*\)@\1T\2\3@g'
+
+ISO8601TIME="$(git log --pretty=format:%ci -n 1 | sed "${ISO_SED}")"
+
+# need GNU date for this:
+# brew update
+# brew install coreutils
+# sudo mv `which date` /bin/date.macosx
+# sudo ln -sf `which gdate` /bin/date
+#
+# #non-standard unix tools
+# yuck...
+#
+UTCTIME="$(TZ=UTC date +"%Y%m%d%H%M%S" --date "${ISO8601TIME}")"
+
+GITSHA="$(git log --pretty=format:%h -n 1)"
+
+VERSION="${UTCTIME}-${GITSHA}"
+
+mkdir -p gen/
+
+echo "${VERSION}" > gen/version.txt
+
+MODULE_NAME="BuildInfo_$(echo "${PROJECT_NAME}" | sed 's@-@_@g')"
+
+tee "gen/${MODULE_NAME}.hs" << EOF
+module ${MODULE_NAME} where
+
+import Prelude
+
+buildInfoVersion :: String
+buildInfoVersion = "${VERSION}"
+
+EOF
+

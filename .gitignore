@@ -1,0 +1,33 @@
+# Haskell build files
+*.a
+*.o
+*.hi
+
+# files we just genreally ont want in the repo
+*.swp
+*.log
+
+# Python compiled bytecode
+*.pyc
+
+#cabal-dev build directory:
+cabal-dev/
+
+#cabal-sandbox build artifacts
+.cabal-sandbox/
+cabal.sandbox.config
+
+# project build directory
+dist/
+gen/
+
+# web artificats
+public/
+internal/
+
+# liquid artifacts
+.liquid/
+
+# in case anyone wants to use hasktags...
+TAGS
+.projectile
