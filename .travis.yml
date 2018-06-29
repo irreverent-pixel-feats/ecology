@@ -1,15 +1,12 @@
 language: minimal
 sudo: required
 dist: trusty
-
 git:
   submodules: false
-
 cache:
   directories:
-    - $HOME/.mafia
-    - $HOME/.cabal
-
+  - "$HOME/.mafia"
+  - "$HOME/.cabal"
 matrix:
   include:
   - env: GHCVER=8.2.2 CABALVER=2.0
@@ -46,4 +43,4 @@ script:
 
 notifications:
   slack:
-    secure: xZjuR8BDyEY2/zllMPggKxcSn2PXc/7nKBA+mWWX4owtxNx+PQmyCS5ypYcbOLSjGZXvaUs5Goi8MLjJpjATSfbZxCelB+lJKfMKXQXijNR/E3GCPArbc4Am34uqFDEQF67rjEJUZmqWfiOpbOnyKvtlZ4EhkhpwD6F1CfOByhi9eAMg5nX8vGRjd34yxO/7xSExXBPSvuZVHtthcNcuT4W9uyEAeiE4fBGMXRMZzRQiTLiziZ9J5Lw2SK/TJX19+m9tEWGiAyRS9m7oWd4BMRZs+ch0EK6ur/6Oo0UG2vbutKl0TjrUrwYuvM2rEM6wZhEwTMaz1/FwJHngyIWHByb9RLBBWWDWMHG0xi8B0VWJ+rOugzgXIUYy3y9QLtRUfdYVgOTRrPD5+30QKnFLLhWXf4F0nsdm42P4iRS9fucLRMReji78FLKl8NNRfZOazRVpoAG2kpA6JRBpFwniwk1MJwOy7xbUY+aG9+ylf/VjZXjGmwTAXOjQpn7w9vkVi0yNt9VoFrVaM/RasLk+S/tor7coA7HkbaAiRJ4lhtNsf/KPVLufH9wtQi/rpx146dlsjuGHJx8vw8/SH5GRVZDjvl4Ush+rHAXwYjni6b36QrXL87COw58Q2gJK0QDn1XH12fvEvNzAdjc9NRVDRvtsoy/lKsNIfw0CkwU6MDw=
+    secure: Pg1ypt9C5bqZrhofd2NW+rbAOBhCxH12WrEwjW+/zTCbg001ECFrXbis+2Odkvx2Htw03Don0U+9XgfCO3Fy1wshe81MT4bcLIFOPhV99YXqIhSvHJOCk8fUpt1ov5U09UVOelC8IVnh7/k+LNkZ5zJsxMh7MjkOf7D1m+vWd3RvMnm8mt8oLQ/dmvXWluTekkIy6QZpZeIuYz0l3UF3QDfd/idNX8WjxVlscDjAsmoI3CwgjvnfcJxV/iI4th+hTBQf/DHBbp8e7XicY656vXIJgG9LQdfJ0cSa5s6Ar6n380Kz5AtpDfDO9Gi5ZtyoovVKmPjaKxHyjmG8nMVF4KsY1siZ+HX9mjZoWAs3FNA+AR3PAj2T26MF455+pvARreY5Lo2rQjOzJgFnrRbeml2u0+xDspX74Cnvc/X4D0uKDnki3nUddiQwiykiwPAGhHL7RrhZkmP/P5yT+yiCgzQmdvW417wEi28Eo5qyplr1MRZfa5gUJxyhtW76hAlsccmFqnSjbLdTC2tGL4a1XSIVxhYLuckB7hH/QdTN/ufY+XF8rtHKQA/rEuojEEoeUMf7z6cPWimHJ5xpnhdV18eE5r7+LD7pMfnVeZEhCqeLjQ6OYgvV/exr3gI0qGZHwyIS8s0orFXCmha1S6SDDQ3CS4gPRPtIjZ1g5FrWCtU=
