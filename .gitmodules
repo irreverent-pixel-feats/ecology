@@ -1,0 +1,18 @@
+[submodule "lib/lab"]
+	path = lib/lab
+	url = https://github.com/domdere/lab.git
+[submodule "lib/preamble"]
+	path = lib/preamble
+	url = https://github.com/domdere/preamble.git
+[submodule "lib/ultra"]
+	path = lib/ultra
+	url = https://github.com/domdere/ultra.git
+[submodule "lib/persevere"]
+	path = lib/persevere
+	url = https://github.com/irreverent-pixel-feats/persevere.git
+[submodule "lib/quantity"]
+	path = lib/quantity
+	url = https://github.com/irreverent-pixel-feats/quantity.git
+[submodule "lib/shush"]
+	path = lib/shush
+	url = https://github.com/irreverent-pixel-feats/shush.git
