@@ -1,4 +1,4 @@
-# ecology
+# ecology [![Build Status](https://img.shields.io/travis/irreverent-pixel-feats/ecology.svg?style=flat)](https://travis-ci.org/irreverent-pixel-feats/ecology)
 
 ## Description
 
