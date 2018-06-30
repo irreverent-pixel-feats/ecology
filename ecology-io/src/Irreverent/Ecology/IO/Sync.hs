@@ -15,6 +15,9 @@ module Irreverent.Ecology.IO.Sync (
   -- * Types
     EcologySyncError(..)
   -- * Functions
+  , bootstrapTemplate
+  , cloneTemplateWithHistory
+  , cloneTemplateWithoutHistory
   , ecologySync
   , renderEcologySyncError
   ) where
@@ -42,6 +45,7 @@ import Irreverent.Ecology.Core.Data (
   , EcologyGitReport(..)
   , EcologyProjectReport(..)
   , GitRepository(..)
+  , GitTemplateHistoryAction(..)
   , GitTemplateRepo(..)
   , NewCIInfo(..)
   , ecologyProjectDescriptionText
@@ -53,7 +57,8 @@ import Irreverent.Ecology.Json.Data (
   )
 
 import Shush (
-    SyncShellError(..)
+    ShT
+  , SyncShellError(..)
   , ShellCommandArg(..)
   , ShellCommand(..)
   , renderSyncShellError
@@ -86,6 +91,7 @@ import qualified Ultra.Data.Text as T
 import Ultra.System.Verified.IO (
     WithTempDirError(..)
   , DirVerificationFail(..)
+  , VerifiedDirPath
   , existsAsDir
   , renderDirVerificationFail
   , renderWithTempDirError
@@ -169,18 +175,19 @@ createNewProject
   :: (MonadCatch m, MonadBracket m, MonadIO m)
   => GitPlatformAPIs g b m e
   -> CIAPIs a i m ce
+  -> GitTemplateHistoryAction
   -> EcologyParameters
   -> (a -> Maybe GitTemplateRepo)
   -> (a -> T.Text)
   -> EcologyProject g i a b c
   -> ExceptT (EcologySyncError e ce ie) m (GitRepository, EcologyProjectName, EcologyHashMap)
-createNewProject gitAPIs ciAPIs params templates renderType p =
+createNewProject gitAPIs ciAPIs templateHistory params templates renderType p =
   let
     projectName :: T.Text
     projectName = ecologyProjectNameText . ecologyProjectName $ p
   in do
     logText [text|Creating repository for new project $projectName...|]
-    gitRepo <- createRepo gitAPIs ciAPIs params templates renderType p
+    gitRepo <- createRepo gitAPIs ciAPIs templateHistory params templates renderType p
     logText [text|Setting up CI for new project $projectName...|]
     (name, ciHashes) <- setupNewCI ciAPIs params p
     pure (gitRepo, name, ciHashes)
@@ -191,16 +198,124 @@ defaultEnvironment = importEnvVar "HOME"
 gitCmd :: [ShellCommandArg] -> ShellCommand
 gitCmd = ShellCommand defaultEnvironment "git"
 
+cloneTemplateWithHistory
+  :: (MonadCatch m, MonadIO m)
+  => GitTemplateRepo
+  -> EitherT e' (ShT m) ()
+cloneTemplateWithHistory template =
+  lift . runSync . gitCmd . fmap RawArg $ [
+      "clone"
+    , gitTemplateRepoURL template
+    , "new-repo"
+    ]
+
+cloneTemplateWithoutHistory
+  :: (MonadCatch m, MonadIO m)
+  => VerifiedDirPath
+  -> GitTemplateRepo
+  -> EitherT e' (ShT m) ()
+cloneTemplateWithoutHistory fp template =
+  let
+    initialiseRepo :: ShellCommand
+    initialiseRepo =
+      gitCmd (RawArg <$> ["init", "new-repo"])
+
+    addTemplateRemote :: ShellCommand
+    addTemplateRemote = gitCmd . fmap RawArg $ [
+        "remote"
+      , "add"
+      , "template"
+      , gitTemplateRepoURL template
+      ]
+
+    fetchTemplateObjects :: ShellCommand
+    fetchTemplateObjects = gitCmd . fmap RawArg $ [
+        "fetch"
+      , "template"
+      ]
+
+    readTemplateHistory :: ShellCommand
+    readTemplateHistory = gitCmd . fmap RawArg $ [
+        "read-tree"
+      , "template/master"
+      ]
+
+    addContents :: ShellCommand
+    addContents = gitCmd . fmap RawArg $ [
+        "checkout"
+      , "--"
+      , "."
+      ]
+  in do
+    lift . runSync $ initialiseRepo
+    mapEitherT (withCwd (verifiedDirPath fp <> "/new-repo")) $ do
+      lift $ traverse_ runSync [
+          addTemplateRemote
+        , fetchTemplateObjects
+        , readTemplateHistory
+        , addContents
+        ]
+
+bootstrapTemplate
+  :: (MonadCatch m, MonadIO m)
+  => EcologyProject g i a b c
+  -> ShT m ()
+bootstrapTemplate p =
+  let
+    bootstrapEnv :: ChildEnvironment
+    bootstrapEnv = ("ECOLOGY_PROJECT_NAME" .:: (ecologyProjectNameText . ecologyProjectName $ p))
+      <> ("ECOLOGY_PROJECT_DESCRIPTION" .:: (ecologyProjectDescriptionText . ecologyProjectDescription $ p))
+      <> defaultEnvironment
+
+    bootstrapTemplateCommand :: ShellCommand
+    bootstrapTemplateCommand =
+      ShellCommand bootstrapEnv "sh" (RawArg <$> [
+          "-c"
+        , "bin/bootstrap-template"
+        ])
+
+    cleanUpTemplate :: ShellCommand
+    cleanUpTemplate =
+      gitCmd . fmap RawArg $ [
+          "rm"
+        , "-rf"
+        , "bin/bootstrap-template"
+        , "template-files"
+        ]
+
+    gitAddCommand :: ShellCommand
+    gitAddCommand =
+      gitCmd . fmap RawArg $ [
+          "add"
+        , "-v"
+        , "."
+        ]
+
+    gitCommitBootstrap :: ShellCommand
+    gitCommitBootstrap =
+      gitCmd (RawArg <$> [
+          "commit"
+        , "-m"
+        , "Initial Commit"
+        ])
+  in traverse_ runSync [
+      bootstrapTemplateCommand
+    , cleanUpTemplate
+    , gitAddCommand
+    , gitCommitBootstrap
+    ]
+
 createRepo
   :: forall a b c e g i ce ie m. (MonadBracket m, MonadCatch m, MonadIO m)
   => GitPlatformAPIs g b m e
   -> CIAPIs a i m ce
+  -> GitTemplateHistoryAction
   -> EcologyParameters
   -> (a -> Maybe GitTemplateRepo)
   -> (a -> T.Text)
   -> EcologyProject g i a b c
   -> EitherT (EcologySyncError e ce ie) m GitRepository
-createRepo apis ciApis params templates renderType p =
+createRepo apis ciApis templateHistory params templates renderType p =
   let
     api :: GitPlatformAPI b m e
     api = selectGitAPI apis $ ecologyProjectLocation p
@@ -220,40 +335,9 @@ createRepo apis ciApis params templates renderType p =
                 (ecologyProjectType p)
                 (ciEnvironmentVars . ci $ p)
 
-              cloneTemplateCommand :: ShellCommand
-              cloneTemplateCommand =
-                ShellCommand defaultEnvironment "git" (RawArg <$> ["clone", gitTemplateRepoURL template, "new-repo"])
-
-              clearGitHistory :: ShellCommand
-              clearGitHistory =
-                ShellCommand mempty "rm" (RawArg <$> ["-rfv", ".git"])
-
-              initialiseRepo :: ShellCommand
-              initialiseRepo =
-                gitCmd (RawArg <$> ["init"])
-
               pushNewRepoCommand :: ShellCommand
               pushNewRepoCommand =
                 gitCmd (RawArg <$> ["push", gitRepoURL newRepo, "master"])
-
-              bootstrapEnv :: ChildEnvironment
-              bootstrapEnv = ("ECOLOGY_PROJECT_NAME" .:: (ecologyProjectNameText . ecologyProjectName $ p))
-                <> ("ECOLOGY_PROJECT_DESCRIPTION" .:: (ecologyProjectDescriptionText . ecologyProjectDescription $ p))
-
-              bootstrapTemplateCommand :: ShellCommand
-              bootstrapTemplateCommand =
-                ShellCommand bootstrapEnv "sh" (RawArg <$> [
-                    "-c"
-                  , "bin/bootstrap-template"
-                  ])
-
-              cleanUpTemplate :: ShellCommand
-              cleanUpTemplate =
-                ShellCommand mempty "rm" (RawArg <$> [
-                    "-rfv"
-                  , "bin/bootstrap-template"
-                  , "template-files"
-                  ])
 
               gitAddCommand :: ShellCommand
               gitAddCommand =
@@ -261,14 +345,6 @@ createRepo apis ciApis params templates renderType p =
                     "add"
                   , "-v"
                   , "."
-                  ])
-
-              gitCommitBootstrap :: ShellCommand
-              gitCommitBootstrap =
-                gitCmd (RawArg <$> [
-                    "commit"
-                  , "-m"
-                  , "Initial Commit"
                   ])
 
               gitCommitCI :: T.Text -> ShellCommand
@@ -279,16 +355,11 @@ createRepo apis ciApis params templates renderType p =
                   , msg
                   ])
             in do
-              lift . runSync $ cloneTemplateCommand
+              case templateHistory of
+                KeepTemplateHistory -> cloneTemplateWithHistory template
+                RemoveTemplateHistory -> cloneTemplateWithoutHistory fp template
               mapEitherT (withCwd (verifiedDirPath fp <> "/new-repo")) $ do
-                lift $ traverse_ runSync [
-                    bootstrapTemplateCommand
-                  , cleanUpTemplate
-                  , clearGitHistory
-                  , initialiseRepo
-                  , gitAddCommand
-                  , gitCommitBootstrap
-                  ]
+                lift $ bootstrapTemplate p
                 changes <- mapEitherT lift . firstEitherT EcologySyncCIError $ initialCIInRepoConfig ciApi (verifiedDirPath fp <> "/new-repo") params newCIInfo
                 lift . forM_ changes $ \msg ->
                   traverse_ runSync [
@@ -418,6 +489,7 @@ ecologySync
   => GitPlatformAPIs g b m e
   -> CIAPIs a i m ce
   -> IMAPI m ie
+  -> GitTemplateHistoryAction
   -> T.Text
   -> T.Text
   -> T.Text
@@ -427,7 +499,7 @@ ecologySync
   -> [EcologyProject g i a b c]
   -> EitherT (EcologySyncError e ce ie) m [GitRepository]
 --ecologySync v gitAPIs ciAuthCfg ciCfg ciAPI imCfg imAPI templates renderType projects = do
-ecologySync gitAPIs ciAPIs imAPI ecologyBucket' ecologyStateObject' paramPath templates renderType renderCIType projects =
+ecologySync gitAPIs ciAPIs imAPI templateHistory ecologyBucket' ecologyStateObject' paramPath templates renderType renderCIType projects =
   let
     ecologyBucket :: BucketName
     ecologyBucket = BucketName ecologyBucket'
@@ -444,7 +516,7 @@ ecologySync gitAPIs ciAPIs imAPI ecologyBucket' ecologyStateObject' paramPath te
       newHashes = ecologyNewParamHashes . ecologyConfigReport $ report
     logText "Creating new repositories..."
     newResults <- forM (newprojects . ecologyGitReport $ report) $
-      createNewProject gitAPIs ciAPIs params templates renderType
+      createNewProject gitAPIs ciAPIs templateHistory params templates renderType
     let
       (newRepos, newNames, newDigests) = unzip3 newResults
       newCIHashes = zip newNames newDigests

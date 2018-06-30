@@ -32,6 +32,7 @@ module Irreverent.Ecology.Core.Data (
   , EnvironmentVariableName(..)
   , EnvironmentVariableValue(..)
   , GitTemplateRepo(..)
+  , GitTemplateHistoryAction(..)
   , GitRepository(..)
   , NewCIInfo(..)
   , NewGitRepository(..)
@@ -63,6 +64,16 @@ data GitTemplateRepo = GitTemplateRepo {
     gitTemplateRepoURL  :: !T.Text
   , gitTemplatePrivacy  :: !EcologyPrivacy
   } deriving (Show, Eq)
+
+-- |
+-- When creating another project from a template
+-- there is an option of keep the template git history,
+-- and removing it, with ecology creating a new
+-- initial commit with the content.
+data GitTemplateHistoryAction =
+    KeepTemplateHistory
+  | RemoveTemplateHistory
+    deriving (Show, Eq)
 
 data GitRepository = GitRepository {
     gitRepoName :: !T.Text
