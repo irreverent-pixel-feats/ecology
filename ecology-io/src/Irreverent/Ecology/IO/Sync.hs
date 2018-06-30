@@ -170,7 +170,7 @@ createNewProject
   => GitPlatformAPIs g b m e
   -> CIAPIs a i m ce
   -> EcologyParameters
-  -> (a -> Maybe (GitTemplateRepo g))
+  -> (a -> Maybe GitTemplateRepo)
   -> (a -> T.Text)
   -> EcologyProject g i a b c
   -> ExceptT (EcologySyncError e ce ie) m (GitRepository, EcologyProjectName, EcologyHashMap)
@@ -196,7 +196,7 @@ createRepo
   => GitPlatformAPIs g b m e
   -> CIAPIs a i m ce
   -> EcologyParameters
-  -> (a -> Maybe (GitTemplateRepo g))
+  -> (a -> Maybe GitTemplateRepo)
   -> (a -> T.Text)
   -> EcologyProject g i a b c
   -> EitherT (EcologySyncError e ce ie) m GitRepository
@@ -421,7 +421,7 @@ ecologySync
   -> T.Text
   -> T.Text
   -> T.Text
-  -> (a -> Maybe (GitTemplateRepo g))
+  -> (a -> Maybe GitTemplateRepo)
   -> (a -> T.Text)
   -> (i -> T.Text)
   -> [EcologyProject g i a b c]

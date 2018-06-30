@@ -59,10 +59,9 @@ import Data.List (reverse)
 
 import Preamble
 
-data GitTemplateRepo g = GitTemplateRepo {
+data GitTemplateRepo = GitTemplateRepo {
     gitTemplateRepoURL  :: !T.Text
   , gitTemplatePrivacy  :: !EcologyPrivacy
-  , gitTemplatePlatform :: g
   } deriving (Show, Eq)
 
 data GitRepository = GitRepository {
