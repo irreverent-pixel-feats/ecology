@@ -1,7 +1,6 @@
-name:               ecology-json
+name:               irreverent-ecology-json
 version:            0.0.1
 license:            BSD3
-license-file:       etc/LICENCE.md
 author:             Dom De Re
 maintainer:         Dom De Re
 copyright:          Copyright (C) 2017
@@ -32,7 +31,7 @@ library
                       , ultra-either
                       , ultra-text
                       , ultra-unordered-containers
-                      , ecology-core
+                      , irreverent-ecology-core
 
     ghc-options:        -Wall
 
@@ -49,8 +48,8 @@ test-suite              test
     build-depends:      base                >= 4 && < 5
                     ,   lab-core
                     ,   domdere-preamble
-                    ,   ecology-core
-                    ,   ecology-json
+                    ,   irreverent-ecology-core
+                    ,   irreverent-ecology-json
                     ,   irreverent-ecology-core-test
                     ,   ultra-aeson
     other-modules:      Test.Irreverent.Ecology.Json.Data
