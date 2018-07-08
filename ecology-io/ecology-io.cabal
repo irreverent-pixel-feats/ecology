@@ -1,4 +1,4 @@
-name:               ecology-io
+name:               irreverent-ecology-io
 version:            0.0.1
 license:            BSD3
 author:             Dom De Re
@@ -32,9 +32,9 @@ library
                       , amazonka-s3             == 1.5.*
                       , amazonka-ssm            == 1.5.*
                       , domdere-preamble
-                      , ecology-api
-                      , ecology-core
-                      , ecology-json
+                      , irreverent-ecology-api
+                      , irreverent-ecology-core
+                      , irreverent-ecology-json
                       , irreverent-persevere
                       , irreverent-quantity-core
                       , irreverent-quantity-th
@@ -73,4 +73,4 @@ test-suite              test
     build-depends:      base                >= 4 && < 5
                     ,   lab-core
                     ,   domdere-preamble
-                    ,   ecology-io
+                    ,   irreverent-ecology-io
