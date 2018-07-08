@@ -1,9 +1,9 @@
-name:               ecology-api
+name:               irreverent-ecology-api
 version:            0.0.1
 license:            BSD3
 author:             Dom De Re
 maintainer:         Dom De Re
-copyright:          Copyright (C) 2017 Irreverent Pixel Feats
+copyright:          Copyright (C) 2017-2018 Irreverent Pixel Feats
 synopsis:           APIs you have to provide to use with ecology
 category:           Data
 description:        APIs you have to provide to use with ecology
@@ -27,7 +27,7 @@ library
                       , bytestring              == 0.10.*
                       , containers
                       , domdere-preamble
-                      , ecology-core
+                      , irreverent-ecology-core
                       , ultra-either
                       , ultra-io
                       , ultra-text
@@ -49,4 +49,4 @@ test-suite              test
     build-depends:      base                >= 4 && < 5
                     ,   lab-core
                     ,   domdere-preamble
-                    ,   ecology-api
+                    ,   irreverent-ecology-api
