@@ -1,7 +1,6 @@
-name:               ecology-core
+name:               irreverent-ecology-core
 version:            0.0.1
 license:            BSD3
-license-file:       etc/LICENCE.md
 author:             Dom De Re
 maintainer:         Dom De Re
 copyright:          Copyright (C) 2017
@@ -49,4 +48,4 @@ test-suite              test
     build-depends:      base                >= 4 && < 5
                     ,   lab-core
                     ,   domdere-preamble
-                    ,   ecology-core
+                    ,   irreverent-ecology-core
