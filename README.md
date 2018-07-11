@@ -1,4 +1,4 @@
-# ecology [![Build Status](https://img.shields.io/travis/irreverent-pixel-feats/ecology.svg?style=flat)](https://travis-ci.org/irreverent-pixel-feats/ecology)
+# ecology [![Build Status](https://travis-ci.com/irreverent-pixel-feats/ecology.svg?branch=master)](https://travis-ci.com/irreverent-pixel-feats/ecology)
 
 ## Description
 
@@ -69,7 +69,7 @@ Each project can be built with the command:
 ```
 
 The first time you ever run it on your system it might take a while, as it will build and install
-[`ambiata/mafia`](https://github.com/ambiata/mafia) on your system.
+[`haskell-mafia/mafia`](https://github.com/haskell-mafia/mafia) on your system.
 
 ## Running the tests
 
