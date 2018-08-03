@@ -83,10 +83,10 @@ data GitRepository = GitRepository {
 -- Information that will be passed from
 -- Ecology to the API to create a New Git Repository
 -- Its currently missing team permissions
-data NewGitRepository b = NewGitRepository {
+data NewGitRepository a b = NewGitRepository {
     newRepoName         :: !EcologyProjectName
   , newRepoDescription  :: !EcologyProjectDescription
-  , newRepoLanguage     :: !T.Text
+  , newRepoType         :: !a
   , newRepoPrivacy      :: !EcologyPrivacy
   , newRepoCategory     :: !(Maybe b)
   , newRepoTags         :: ![EcologyTag]
@@ -316,11 +316,11 @@ ecologyPrivacyText EcologyPrivate = "private"
 privacyValues :: NonEmpty EcologyPrivacy
 privacyValues = [EcologyPublic, EcologyPrivate]
 
-newGitRepository :: (a -> T.Text) -> EcologyProject g i a b c -> NewGitRepository b
-newGitRepository renderType (EcologyProject name' _ desc typ category _ _ _ priv tags' _) = NewGitRepository
+newGitRepository :: EcologyProject g i a b c -> NewGitRepository a b
+newGitRepository (EcologyProject name' _ desc typ category _ _ _ priv tags' _) = NewGitRepository
   name'
   desc
-  (renderType typ)
+  typ
   priv
   category
   tags'
