@@ -123,14 +123,14 @@ renderEcologyReportError _ (EcologyReportJsonError desc t) = T.concat ["Json Par
 renderEcologyReportError _ (EcologyReportHttpError e)     = T.concat ["HTTP Error: ", e]
 
 fetchOrgRepos
-  :: forall b g m e. (Monad m)
-  => GitPlatformAPIs g b m e
+  :: forall a b g m e. (Monad m)
+  => GitPlatformAPIs g a b m e
   -> [g]
   -> EitherT (EcologyReportError e) m [(g, NonEmpty GitRepository)]
 fetchOrgRepos apis platforms =
   fmap (filteredBy (traverse nonEmpty)) . forM platforms $ \platform ->
     let
-      api :: GitPlatformAPI b m e
+      api :: GitPlatformAPI a b m e
       api = selectGitAPI apis platform
     in bimapEitherT EcologyReportGitError ((,) platform) $ getOrgRepos api
 
@@ -261,7 +261,7 @@ envChange (H.HashMapKeyDelete varName)  =
 getEcologyReport
   :: forall a b c e g i m. (Monad m, MonadCatch m, MonadIO m, Ord g)
   => Maybe Env
-  -> GitPlatformAPIs g b m e
+  -> GitPlatformAPIs g a b m e
   -> (i -> T.Text)
   -> T.Text
   -> T.Text
@@ -327,7 +327,7 @@ getEcologyReport mEnv apis renderCIType ecologyBucket' ecologyStateObject' param
 -- `ecologyGitReportUnmanaged` list
 gitReport
   :: forall a b c e g i m. (Monad m, Ord g)
-  => GitPlatformAPIs g b m e
+  => GitPlatformAPIs g a b m e
   -> [EcologyProject g i a b c]
   -> EitherT (EcologyReportError e) m (EcologyGitReport g i a b c)
 gitReport apis projects =
