@@ -15,15 +15,20 @@ module Irreverent.Ecology.API.Git (
 
 import Irreverent.Ecology.Core.Data (GitRepository, NewGitRepository)
 
-import Ultra.Control.Monad.Trans.Either (EitherT)
-import qualified Ultra.Data.Text as T
+import Ultra.Control.Monad.Trans.Either (EitherT, firstEitherT)
+
+import Preamble
 
 newtype GitPlatformAPIs g a b m e = GitPlatformAPIs {
     selectGitAPI :: g -> GitPlatformAPI a b m e
   }
 
 data GitPlatformAPI a b m e = GitPlatformAPI {
-    gpAuthToken   :: !T.Text
-  , getOrgRepos   :: EitherT e m [GitRepository]
+    getOrgRepos   :: EitherT e m [GitRepository]
   , createNewRepo :: NewGitRepository a b -> EitherT e m GitRepository
   }
+
+instance (Functor m) => Functor (GitPlatformAPI a b m) where
+--fmap :: (a -> b) -> f a -> f b
+  fmap f (GitPlatformAPI gor cnr) =
+    GitPlatformAPI (firstEitherT f gor) (firstEitherT f . cnr)
