@@ -18,12 +18,12 @@ import Irreverent.Ecology.Core.Data (GitRepository, NewGitRepository)
 import Ultra.Control.Monad.Trans.Either (EitherT)
 import qualified Ultra.Data.Text as T
 
-newtype GitPlatformAPIs g b m e = GitPlatformAPIs {
-    selectGitAPI :: g -> GitPlatformAPI b m e
+newtype GitPlatformAPIs g a b m e = GitPlatformAPIs {
+    selectGitAPI :: g -> GitPlatformAPI a b m e
   }
 
-data GitPlatformAPI b m e = GitPlatformAPI {
+data GitPlatformAPI a b m e = GitPlatformAPI {
     gpAuthToken   :: !T.Text
   , getOrgRepos   :: EitherT e m [GitRepository]
-  , createNewRepo :: NewGitRepository b -> EitherT e m GitRepository
+  , createNewRepo :: NewGitRepository a b -> EitherT e m GitRepository
   }
