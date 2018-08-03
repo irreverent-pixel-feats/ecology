@@ -17,6 +17,6 @@ import Irreverent.Ecology.API.Git
 
 -- TODO: Do I still need this?
 data VerifiedProject g i m ge a b c = VerifiedProject {
-    vpGitAPI  :: GitPlatformAPI b m ge
+    vpGitAPI  :: GitPlatformAPI a b m ge
   , vpProject :: EcologyProject g i a b c
   }
