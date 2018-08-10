@@ -257,9 +257,10 @@ cloneTemplateWithoutHistory fp template =
 
 bootstrapTemplate
   :: (MonadCatch m, MonadIO m)
-  => EcologyProject g i a b c
+  => (EcologyProject g i a b c -> ChildEnvironment) -- ^ Provide a function that passes a custom environment to the ecology template
+  -> EcologyProject g i a b c
   -> ShT m ()
-bootstrapTemplate p =
+bootstrapTemplate customEnv p =
   let
     bootstrapEnv :: ChildEnvironment
     bootstrapEnv = ("ECOLOGY_PROJECT_NAME" .:: (ecologyProjectNameText . ecologyProjectName $ p))
@@ -268,7 +269,7 @@ bootstrapTemplate p =
 
     bootstrapTemplateCommand :: ShellCommand
     bootstrapTemplateCommand =
-      ShellCommand bootstrapEnv "sh" (RawArg <$> [
+      ShellCommand (customEnv p <> bootstrapEnv) "sh" (RawArg <$> [
           "-c"
         , "bin/bootstrap-template"
         ])
