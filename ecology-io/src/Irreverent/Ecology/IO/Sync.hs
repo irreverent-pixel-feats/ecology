@@ -175,18 +175,19 @@ createNewProject
   :: (MonadCatch m, MonadBracket m, MonadIO m)
   => GitPlatformAPIs g a b m e
   -> CIAPIs a i m ce
+  -> (EcologyProject g i a b c -> ChildEnvironment)
   -> GitTemplateHistoryAction
   -> EcologyParameters
   -> (a -> Maybe GitTemplateRepo)
   -> EcologyProject g i a b c
   -> ExceptT (EcologySyncError e ce ie) m (GitRepository, EcologyProjectName, EcologyHashMap)
-createNewProject gitAPIs ciAPIs templateHistory params templates p =
+createNewProject gitAPIs ciAPIs customEnv templateHistory params templates p =
   let
     projectName :: T.Text
     projectName = ecologyProjectNameText . ecologyProjectName $ p
   in do
     logText [text|Creating repository for new project $projectName...|]
-    gitRepo <- createRepo gitAPIs ciAPIs templateHistory params templates p
+    gitRepo <- createRepo gitAPIs ciAPIs customEnv templateHistory params templates p
     logText [text|Setting up CI for new project $projectName...|]
     (name, ciHashes) <- setupNewCI ciAPIs params p
     pure (gitRepo, name, ciHashes)
@@ -257,9 +258,10 @@ cloneTemplateWithoutHistory fp template =
 
 bootstrapTemplate
   :: (MonadCatch m, MonadIO m)
-  => EcologyProject g i a b c
+  => (EcologyProject g i a b c -> ChildEnvironment) -- ^ Provide a function that passes a custom environment to the ecology template
+  -> EcologyProject g i a b c
   -> ShT m ()
-bootstrapTemplate p =
+bootstrapTemplate customEnv p =
   let
     bootstrapEnv :: ChildEnvironment
     bootstrapEnv = ("ECOLOGY_PROJECT_NAME" .:: (ecologyProjectNameText . ecologyProjectName $ p))
@@ -268,7 +270,7 @@ bootstrapTemplate p =
 
     bootstrapTemplateCommand :: ShellCommand
     bootstrapTemplateCommand =
-      ShellCommand bootstrapEnv "sh" (RawArg <$> [
+      ShellCommand (customEnv p <> bootstrapEnv) "sh" (RawArg <$> [
           "-c"
         , "bin/bootstrap-template"
         ])
@@ -308,12 +310,13 @@ createRepo
   :: forall a b c e g i ce ie m. (MonadBracket m, MonadCatch m, MonadIO m)
   => GitPlatformAPIs g a b m e
   -> CIAPIs a i m ce
+  -> (EcologyProject g i a b c -> ChildEnvironment)
   -> GitTemplateHistoryAction
   -> EcologyParameters
   -> (a -> Maybe GitTemplateRepo)
   -> EcologyProject g i a b c
   -> EitherT (EcologySyncError e ce ie) m GitRepository
-createRepo apis ciApis templateHistory params templates p =
+createRepo apis ciApis customEnv templateHistory params templates p =
   let
     api :: GitPlatformAPI a b m e
     api = selectGitAPI apis $ ecologyProjectLocation p
@@ -357,7 +360,7 @@ createRepo apis ciApis templateHistory params templates p =
                 KeepTemplateHistory -> cloneTemplateWithHistory template
                 RemoveTemplateHistory -> cloneTemplateWithoutHistory fp template
               mapEitherT (withCwd (verifiedDirPath fp <> "/new-repo")) $ do
-                lift $ bootstrapTemplate p
+                lift $ bootstrapTemplate customEnv p
                 changes <- mapEitherT lift . firstEitherT EcologySyncCIError $ initialCIInRepoConfig ciApi (verifiedDirPath fp <> "/new-repo") params newCIInfo
                 lift . forM_ changes $ \msg ->
                   traverse_ runSync [
@@ -487,6 +490,7 @@ ecologySync
   => GitPlatformAPIs g a b m e
   -> CIAPIs a i m ce
   -> IMAPI m ie
+  -> (EcologyProject g i a b c -> ChildEnvironment)
   -> GitTemplateHistoryAction
   -> T.Text
   -> T.Text
@@ -496,7 +500,7 @@ ecologySync
   -> [EcologyProject g i a b c]
   -> EitherT (EcologySyncError e ce ie) m [GitRepository]
 --ecologySync v gitAPIs ciAuthCfg ciCfg ciAPI imCfg imAPI templates projects = do
-ecologySync gitAPIs ciAPIs imAPI templateHistory ecologyBucket' ecologyStateObject' paramPath templates renderCIType projects =
+ecologySync gitAPIs ciAPIs imAPI customEnv templateHistory ecologyBucket' ecologyStateObject' paramPath templates renderCIType projects =
   let
     ecologyBucket :: BucketName
     ecologyBucket = BucketName ecologyBucket'
@@ -513,7 +517,7 @@ ecologySync gitAPIs ciAPIs imAPI templateHistory ecologyBucket' ecologyStateObje
       newHashes = ecologyNewParamHashes . ecologyConfigReport $ report
     logText "Creating new repositories..."
     newResults <- forM (newprojects . ecologyGitReport $ report) $
-      createNewProject gitAPIs ciAPIs templateHistory params templates
+      createNewProject gitAPIs ciAPIs customEnv templateHistory params templates
     let
       (newRepos, newNames, newDigests) = unzip3 newResults
       newCIHashes = zip newNames newDigests
