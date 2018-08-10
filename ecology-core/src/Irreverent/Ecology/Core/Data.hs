@@ -76,8 +76,9 @@ data GitTemplateHistoryAction =
     deriving (Show, Eq)
 
 data GitRepository = GitRepository {
-    gitRepoName :: !T.Text
-  , gitRepoURL  :: !T.Text
+    gitRepoName      :: !T.Text
+  , gitRepoGitUrl    :: !T.Text -- ^ A url you can push git commits to
+  , gitRepoHtmlUrl  :: !T.Text -- ^ A url for a human to navigate their browser to...
   } deriving (Show, Eq)
 
 -- Information that will be passed from
