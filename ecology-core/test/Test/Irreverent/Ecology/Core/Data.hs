@@ -12,6 +12,7 @@ module Test.Irreverent.Ecology.Core.Data (
   -- * Generators
     projects
   , projectCIs
+  , ecologyHashMaps
   , envVarNames
   , envVarValues
   , envVarPairs
@@ -36,6 +37,8 @@ import Lab.Core.Gen (
   , maybeOf
   )
 import Lab.Core.QuickCheck (Gen, elements, oneof)
+
+import qualified Ultra.Data.HashMap.Strict as H
 
 import Preamble
 
@@ -92,6 +95,10 @@ teamPermissions = TeamPermission
 
 teamNames :: Gen TeamName
 teamNames = TeamName <$> boundedTextOf1 10 alphaNumChars
+
+ecologyHashMaps :: Gen EcologyHashMap
+ecologyHashMaps = EcologyHashMap . H.fromList
+  <$> boundedListOf 50 ((,) <$> boundedTextOf1 10 alphaNumChars <*> boundedTextOf1 10 alphaNumChars)
 
 ecologyPermissions :: Gen EcologyPermission
 ecologyPermissions = elements permissionValues
