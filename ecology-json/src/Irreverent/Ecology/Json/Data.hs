@@ -35,6 +35,7 @@ module Irreverent.Ecology.Json.Data (
   ) where
 
 import Irreverent.Ecology.Core.Data
+import qualified Irreverent.Ecology.Core.Data.Legacy.Digests.V1 as V1
 
 import Ultra.Data.Aeson (
     ToJSON(..)
@@ -208,17 +209,17 @@ ecologyProjectFromJsonV1 codecs o = EcologyProject
   <*> (o .: "experts" >>= traverse (fmap Username . parseJSON))
 
 data EcologyDigestStoreJson =
-  EcologyDigestStoreJsonV1 !EcologyDigestStore
+  EcologyDigestStoreJsonV1 !V1.EcologyDigestStore
   deriving (Show, Eq)
 
 ecologyDigestStoreLatestJson
-  :: EcologyDigestStore
+  :: V1.EcologyDigestStore
   -> EcologyDigestStoreJson
 ecologyDigestStoreLatestJson = EcologyDigestStoreJsonV1
 
 ecologyDigestStoreFromJson
   :: EcologyDigestStoreJson
-  -> EcologyDigestStore
+  -> V1.EcologyDigestStore
 ecologyDigestStoreFromJson (EcologyDigestStoreJsonV1 x) = x
 
 instance ToJSON EcologyDigestStoreJson where
@@ -235,11 +236,11 @@ instance FromJSON EcologyDigestStoreJson where
       ]
 
 ecologyDigestStoreV1
-  :: EcologyDigestStore
+  :: V1.EcologyDigestStore
   -> Value
 ecologyDigestStoreV1 s =
   let
-    digests = toJSON . flip fmap (H.toList . digestStore $ s) $ \(pn, digests') ->
+    digests = toJSON . flip fmap (H.toList . V1.digestStore $ s) $ \(pn, digests') ->
       object [
         "project" .= ecologyProjectNameText pn
       , "digests" .= ecologyDigestsJsonV1 digests'
@@ -249,8 +250,8 @@ ecologyDigestStoreV1 s =
     , "project_digests" .= digests
     ]
 
-ecologyDigestsJsonV1 :: EcologyDigests -> Value
-ecologyDigestsJsonV1 (EcologyDigests ciParams ciOther) = object [
+ecologyDigestsJsonV1 :: V1.EcologyDigests -> Value
+ecologyDigestsJsonV1 (V1.EcologyDigests ciParams ciOther) = object [
     "ci_params" .= ecologyHashMapJsonV1 ciParams
   , "ci_other" .= ecologyHashMapJsonV1 ciOther
   ]
@@ -277,22 +278,22 @@ ecologyHashMapParseJsonV1 v = do
 
 ecologyDigestsParseJsonV1
   :: Object
-  -> Parser EcologyDigests
+  -> Parser V1.EcologyDigests
 ecologyDigestsParseJsonV1 o =
-  EcologyDigests
+  V1.EcologyDigests
     <$> (o .: "ci_params" >>= ecologyHashMapParseJsonV1)
     <*> (o .: "ci_other" >>= ecologyHashMapParseJsonV1)
 
 ecologyDigestStoreParseJsonV1
   :: Object
-  -> Parser EcologyDigestStore
+  -> Parser V1.EcologyDigestStore
 ecologyDigestStoreParseJsonV1 o = do
   projectDigests <- o .: "project_digests"
   kvs <- forM projectDigests $ \o' ->
     (,)
       <$> (EcologyProjectName <$> o' .: "project")
       <*> (o' .: "digests" >>= ecologyDigestsParseJsonV1)
-  pure . EcologyDigestStore . H.fromList $ kvs
+  pure . V1.EcologyDigestStore . H.fromList $ kvs
 
 t :: T.Text -> T.Text
 t = id
