@@ -222,12 +222,17 @@ newtype EcologyHashMap = EcologyHashMap {
     hashes :: H.HashMap T.Text T.Text
   } deriving (Show, Eq)
 
+--data EcologyDigests2 = EcologyDigests2 {
+--    gitTypeHash  :: T.Text          -- A text tag/hash to denote which git platform was used for this project
+--  , gitHashes    :: EcologyHashMap  -- Hashes to track any stateful things on the git platform we use.
+--  , ciTypeHash   :: T.Text          -- A text tag/hash to denote the CIaaS used to supply CI services
+--  , ciParamMap   :: EcologyHashMap  -- CI Parameters, used by 'users'
+--  , ciHashes     :: EcologyHashMap  -- Other stateful hashes decided by the CI API implementations
+--  } deriving (Show, Eq)
+
 data EcologyDigests2 = EcologyDigests2 {
-    gitTypeHash  :: T.Text          -- A text tag/hash to denote which git platform was used for this project
-  , gitHashes    :: EcologyHashMap  -- Hashes to track any stateful things on the git platform we use.
-  , ciTypeHash   :: T.Text          -- A text tag/hash to denote the CIaaS used to supply CI services
-  , ciParamMap   :: EcologyHashMap  -- CI Parameters, used by 'users'
-  , ciHashes     :: EcologyHashMap  -- Other stateful hashes decided by the CI API implementations
+    ciParamMap :: EcologyHashMap  -- CI Parameters, used by 'users'
+  , ciOtherMap :: EcologyHashMap  -- Other stateful hashes decided by the CI API implementations
   } deriving (Show, Eq)
 
 newtype EcologyTag = EcologyTag {
