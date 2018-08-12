@@ -213,14 +213,16 @@ data EcologyDigestStoreJson =
   deriving (Show, Eq)
 
 ecologyDigestStoreLatestJson
-  :: V1.EcologyDigestStore
+  :: EcologyDigestStore2
   -> EcologyDigestStoreJson
-ecologyDigestStoreLatestJson = EcologyDigestStoreJsonV1
+ecologyDigestStoreLatestJson =
+  EcologyDigestStoreJsonV1 . V1.ecologyDigestStoreV2toV1
 
 ecologyDigestStoreFromJson
   :: EcologyDigestStoreJson
-  -> V1.EcologyDigestStore
-ecologyDigestStoreFromJson (EcologyDigestStoreJsonV1 x) = x
+  -> EcologyDigestStore2
+ecologyDigestStoreFromJson (EcologyDigestStoreJsonV1 x) =
+ V1.ecologyDigestStoreV1toV2 x
 
 instance ToJSON EcologyDigestStoreJson where
 --toJSON :: a -> Value
