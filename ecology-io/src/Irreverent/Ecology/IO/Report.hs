@@ -23,7 +23,6 @@ import Irreverent.Ecology.IO.Common
 
 import Irreverent.Ecology.API.Git
 import Irreverent.Ecology.Core.Data
-import qualified Irreverent.Ecology.Core.Data.Legacy.Digests.V1 as V1
 
 import Irreverent.Ecology.Json.Data (
     ecologyDigestStoreFromJson
@@ -203,10 +202,10 @@ retrieveDigestStore
   => Env
   -> BucketName
   -> ObjectKey
-  -> ExceptT (EcologyReportError e) m V1.EcologyDigestStore
+  -> ExceptT (EcologyReportError e) m EcologyDigestStore2
 retrieveDigestStore env bucket object =
   getObjectText env bucket object >>= \case
-    Nothing   -> pure $ V1.EcologyDigestStore H.empty
+    Nothing   -> pure $ EcologyDigestStore2 H.empty
     Just json -> hoistEither
       . bimap (EcologyReportJsonError "digest store" . T.pack) ecologyDigestStoreFromJson
       . A.eitherDecodeStrict
