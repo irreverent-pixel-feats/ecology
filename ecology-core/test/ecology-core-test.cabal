@@ -29,6 +29,7 @@ library
                       , domdere-preamble
                       , irreverent-ecology-core
                       , lab-core
+                      , ultra-unordered-containers
                       , ultra-text
 
     ghc-options:        -Wall
@@ -36,3 +37,4 @@ library
     hs-source-dirs:     .
 
     exposed-modules:    Test.Irreverent.Ecology.Core.Data
+                        Test.Irreverent.Ecology.Core.Data.Legacy.Digests.V1

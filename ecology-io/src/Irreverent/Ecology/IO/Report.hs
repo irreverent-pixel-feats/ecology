@@ -202,10 +202,10 @@ retrieveDigestStore
   => Env
   -> BucketName
   -> ObjectKey
-  -> ExceptT (EcologyReportError e) m EcologyDigestStore
+  -> ExceptT (EcologyReportError e) m EcologyDigestStore2
 retrieveDigestStore env bucket object =
   getObjectText env bucket object >>= \case
-    Nothing   -> pure $ EcologyDigestStore H.empty
+    Nothing   -> pure $ EcologyDigestStore2 H.empty
     Just json -> hoistEither
       . bimap (EcologyReportJsonError "digest store" . T.pack) ecologyDigestStoreFromJson
       . A.eitherDecodeStrict

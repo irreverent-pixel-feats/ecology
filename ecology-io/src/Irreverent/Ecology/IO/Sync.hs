@@ -33,8 +33,8 @@ import Irreverent.Ecology.API (
   , IMAPI(..)
   )
 import Irreverent.Ecology.Core.Data (
-    EcologyDigests(..)
-  , EcologyDigestStore(..)
+    EcologyDigests2(..)
+  , EcologyDigestStore2(..)
   , EcologyHashMap(..)
   , EcologyParameters(..)
   , EcologyProject(..)
@@ -425,7 +425,7 @@ writeDigestStore
   => Env
   -> BucketName
   -> ObjectKey
-  -> EcologyDigestStore
+  -> EcologyDigestStore2
   -> ExceptT (EcologySyncError e ce ie) m ()
 writeDigestStore env bucket key store =
   let
@@ -465,7 +465,7 @@ writeDigestStore env bucket key store =
 combineHashes
   :: [(EcologyProjectName, EcologyHashMap)]
   -> [(EcologyProjectName, EcologyHashMap)]
-  -> EcologyDigestStore
+  -> EcologyDigestStore2
 combineHashes params ciHashes =
   let
     paramHashMap :: H.HashMap EcologyProjectName EcologyHashMap
@@ -476,12 +476,12 @@ combineHashes params ciHashes =
 
     allNames :: [EcologyProjectName]
     allNames = ordNub $ ((<>) `on` fmap fst) params ciHashes
-  in EcologyDigestStore
+  in EcologyDigestStore2
     . H.fromList
     . flip fmap allNames
     . (<*>) (,)
     $ \project ->
-      (EcologyDigests `on` H.lookupDefault (EcologyHashMap H.empty) project)
+      (EcologyDigests2 `on` H.lookupDefault (EcologyHashMap H.empty) project)
         paramHashMap
         ciHashMap
 
