@@ -12,8 +12,8 @@
 -------------------------------------------------------------------
 module Irreverent.Ecology.Core.Data (
   -- * Types
-    EcologyDigests2(..)
-  , EcologyDigestStore2(..)
+    EcologyDigests(..)
+  , EcologyDigestStore(..)
   , EcologyEnvironmentVariableUpdate(..)
   , EcologyReport(..)
   , EcologyConfigReport(..)
@@ -186,7 +186,7 @@ partitionEnvironmentVariableChanges =
 
 data EcologyConfigReport i = EcologyConfigReport {
     ecologyConfigParams             :: !EcologyParameters
-  , ecologyOldHashes                :: !EcologyDigestStore2
+  , ecologyOldHashes                :: !EcologyDigestStore
   , ecologyNewParamHashes           :: ![(EcologyProjectName, EcologyHashMap)] -- ^ New Hashes, only for the parameters, doesn't include the new CI hashes though.
   , ecologyParamChanges             :: ![(EcologyProjectName, i, NonEmpty EcologyEnvironmentVariableUpdate)]
   , ecologyUnactionableParamChanges :: ![(EcologyProjectName, T.Text, NonEmpty EcologyEnvironmentVariableUpdate)]
@@ -214,15 +214,15 @@ newtype EcologyParameters = EcologyParameters {
     paramMap :: H.HashMap T.Text T.Text
   } deriving (Show, Eq)
 
-newtype EcologyDigestStore2 = EcologyDigestStore2 {
-    digestStore :: H.HashMap EcologyProjectName EcologyDigests2
+newtype EcologyDigestStore = EcologyDigestStore {
+    digestStore :: H.HashMap EcologyProjectName EcologyDigests
   } deriving (Show, Eq)
 
 newtype EcologyHashMap = EcologyHashMap {
     hashes :: H.HashMap T.Text T.Text
   } deriving (Show, Eq)
 
---data EcologyDigests2 = EcologyDigests2 {
+--data EcologyDigests = EcologyDigests {
 --    gitTypeHash  :: T.Text          -- A text tag/hash to denote which git platform was used for this project
 --  , gitHashes    :: EcologyHashMap  -- Hashes to track any stateful things on the git platform we use.
 --  , ciTypeHash   :: T.Text          -- A text tag/hash to denote the CIaaS used to supply CI services
@@ -230,7 +230,7 @@ newtype EcologyHashMap = EcologyHashMap {
 --  , ciHashes     :: EcologyHashMap  -- Other stateful hashes decided by the CI API implementations
 --  } deriving (Show, Eq)
 
-data EcologyDigests2 = EcologyDigests2 {
+data EcologyDigests = EcologyDigests {
     ciParamMap :: EcologyHashMap  -- CI Parameters, used by 'users'
   , ciOtherMap :: EcologyHashMap  -- Other stateful hashes decided by the CI API implementations
   } deriving (Show, Eq)

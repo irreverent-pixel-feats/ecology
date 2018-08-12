@@ -23,8 +23,8 @@ import Irreverent.Ecology.Core.Data (
   )
 
 import qualified Irreverent.Ecology.Core.Data as V2 (
-    EcologyDigests2(..)
-  , EcologyDigestStore2(..)
+    EcologyDigests(..)
+  , EcologyDigestStore(..)
   )
 
 import qualified Ultra.Data.HashMap.Strict as H
@@ -42,24 +42,24 @@ data EcologyDigests = EcologyDigests {
 
 ecologyDigestStoreV1toV2
   :: EcologyDigestStore
-  -> V2.EcologyDigestStore2
+  -> V2.EcologyDigestStore
 ecologyDigestStoreV1toV2 (EcologyDigestStore m) =
-  V2.EcologyDigestStore2 (ecologyDigestsV1toV2 <$> m)
+  V2.EcologyDigestStore (ecologyDigestsV1toV2 <$> m)
 
 ecologyDigestStoreV2toV1
-  :: V2.EcologyDigestStore2
+  :: V2.EcologyDigestStore
   -> EcologyDigestStore
-ecologyDigestStoreV2toV1 (V2.EcologyDigestStore2 m) =
+ecologyDigestStoreV2toV1 (V2.EcologyDigestStore m) =
   EcologyDigestStore (ecologyDigestsV2toV1 <$> m)
 
 ecologyDigestsV1toV2
   :: EcologyDigests
-  -> V2.EcologyDigests2
+  -> V2.EcologyDigests
 ecologyDigestsV1toV2 (EcologyDigests x y)
-  = V2.EcologyDigests2 x y
+  = V2.EcologyDigests x y
 
 ecologyDigestsV2toV1
-  :: V2.EcologyDigests2
+  :: V2.EcologyDigests
   -> EcologyDigests
-ecologyDigestsV2toV1 (V2.EcologyDigests2 x y)
+ecologyDigestsV2toV1 (V2.EcologyDigests x y)
   = EcologyDigests x y
