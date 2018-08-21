@@ -39,6 +39,7 @@ library
     exposed-modules:    Irreverent.Ecology.API
                         Irreverent.Ecology.API.CI
                         Irreverent.Ecology.API.Git
+                        Irreverent.Ecology.API.Hooks
                         Irreverent.Ecology.API.IM
 
 test-suite              test
