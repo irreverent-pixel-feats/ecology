@@ -28,6 +28,7 @@ import Irreverent.Ecology.IO.Report
 import Irreverent.Ecology.API (
     CIAPI(..)
   , CIAPIs(..)
+  , CustomHooks(..)
   , GitPlatformAPI(..)
   , GitPlatformAPIs(..)
   , IMAPI(..)
@@ -126,14 +127,15 @@ import Network.AWS.S3.Types (
 
 import Preamble hiding ((<>))
 
-data EcologySyncError ge ce ie =
+data EcologySyncError ge ce he ie =
     EcologySyncReportError !(EcologyReportError ge)
   | EcologySyncGitError !ge
   | EcologySyncCIError !ce
   | EcologySyncIMError !ie
+  | EcologySyncHookError !he
   | EcologySyncNoDirError !DirVerificationFail
   | EcologySyncShellError !SyncShellError
-  | EcologySyncTempDirError !(WithTempDirError (EcologySyncError ge ce ie) ())
+  | EcologySyncTempDirError !(WithTempDirError (EcologySyncError ge ce he ie) ())
   | EcologySyncMissingEnvironmentVariables !(NonEmpty T.Text)
   | EcologySyncAWSParameterError
   | EcologySyncJsonError !T.Text !T.Text
@@ -143,20 +145,22 @@ data EcologySyncError ge ce ie =
 renderEcologySyncError
   :: (ge -> T.Text)
   -> (ce -> T.Text)
+  -> (he -> T.Text)
   -> (ie -> T.Text)
-  -> EcologySyncError ge ce ie
+  -> EcologySyncError ge ce he ie
   -> T.Text
-renderEcologySyncError f _ _ (EcologySyncReportError e)   = renderEcologyReportError f e
-renderEcologySyncError f _ _ (EcologySyncGitError e)      = f e
-renderEcologySyncError _ f _ (EcologySyncCIError e)       = f e
-renderEcologySyncError _ _ f (EcologySyncIMError e)       = f e
-renderEcologySyncError _ _ _ (EcologySyncNoDirError e)    = renderDirVerificationFail e
-renderEcologySyncError _ _ _ (EcologySyncShellError e)    = renderSyncShellError e
-renderEcologySyncError f g h (EcologySyncTempDirError e)  = renderWithTempDirError (renderEcologySyncError f g h) (const "") e
-renderEcologySyncError _ _ _ EcologySyncAWSParameterError = "Name or Value missing from AWS SSM response (This shouldn't happen)"
-renderEcologySyncError _ _ _ (EcologySyncMissingEnvironmentVariables names) = T.bracketedList "Environment Variables missing on SSM: [" "]" ", " . toList $ names
-renderEcologySyncError _ _ _ (EcologySyncJsonError desc t) = T.concat ["Json Parse Error while parsing ", desc, ": '", t, "'"]
-renderEcologySyncError _ _ _ (EcologySyncHttpError e)     = T.concat ["HTTP Error: ", e]
+renderEcologySyncError f _ _ _ (EcologySyncReportError e)   = renderEcologyReportError f e
+renderEcologySyncError f _ _ _ (EcologySyncGitError e)      = f e
+renderEcologySyncError _ f _ _ (EcologySyncCIError e)       = f e
+renderEcologySyncError _ _ _ f (EcologySyncIMError e)       = f e
+renderEcologySyncError _ _ f _ (EcologySyncHookError e)     = f e
+renderEcologySyncError _ _ _ _ (EcologySyncNoDirError e)    = renderDirVerificationFail e
+renderEcologySyncError _ _ _ _ (EcologySyncShellError e)    = renderSyncShellError e
+renderEcologySyncError f g h i (EcologySyncTempDirError e)  = renderWithTempDirError (renderEcologySyncError f g h i) (const "") e
+renderEcologySyncError _ _ _ _ EcologySyncAWSParameterError = "Name or Value missing from AWS SSM response (This shouldn't happen)"
+renderEcologySyncError _ _ _ _ (EcologySyncMissingEnvironmentVariables names) = T.bracketedList "Environment Variables missing on SSM: [" "]" ", " . toList $ names
+renderEcologySyncError _ _ _ _ (EcologySyncJsonError desc t) = T.concat ["Json Parse Error while parsing ", desc, ": '", t, "'"]
+renderEcologySyncError _ _ _ _ (EcologySyncHttpError e)     = T.concat ["HTTP Error: ", e]
 
 data EcologyGitCIError = EcologyGitCIError deriving (Show, Eq)
 
@@ -175,13 +179,14 @@ createNewProject
   :: (MonadCatch m, MonadBracket m, MonadIO m)
   => GitPlatformAPIs g a b m e
   -> CIAPIs a i m ce
+  -> CustomHooks g i a b c m he
   -> (EcologyProject g i a b c -> ChildEnvironment)
   -> GitTemplateHistoryAction
   -> EcologyParameters
   -> (a -> Maybe GitTemplateRepo)
   -> EcologyProject g i a b c
-  -> ExceptT (EcologySyncError e ce ie) m (GitRepository, EcologyProjectName, EcologyHashMap)
-createNewProject gitAPIs ciAPIs customEnv templateHistory params templates p =
+  -> ExceptT (EcologySyncError e ce he ie) m (GitRepository, EcologyProjectName, EcologyHashMap)
+createNewProject gitAPIs ciAPIs hooks customEnv templateHistory params templates p =
   let
     projectName :: T.Text
     projectName = ecologyProjectNameText . ecologyProjectName $ p
@@ -190,6 +195,7 @@ createNewProject gitAPIs ciAPIs customEnv templateHistory params templates p =
     gitRepo <- createRepo gitAPIs ciAPIs customEnv templateHistory params templates p
     logText [text|Setting up CI for new project $projectName...|]
     (name, ciHashes) <- setupNewCI ciAPIs params p
+    firstEitherT EcologySyncHookError $ chPostSyncHook hooks p
     pure (gitRepo, name, ciHashes)
 
 defaultEnvironment :: ChildEnvironment
@@ -307,7 +313,7 @@ bootstrapTemplate customEnv p =
     ]
 
 createRepo
-  :: forall a b c e g i ce ie m. (MonadBracket m, MonadCatch m, MonadIO m)
+  :: forall a b c e g i ce he ie m. (MonadBracket m, MonadCatch m, MonadIO m)
   => GitPlatformAPIs g a b m e
   -> CIAPIs a i m ce
   -> (EcologyProject g i a b c -> ChildEnvironment)
@@ -315,7 +321,7 @@ createRepo
   -> EcologyParameters
   -> (a -> Maybe GitTemplateRepo)
   -> EcologyProject g i a b c
-  -> EitherT (EcologySyncError e ce ie) m GitRepository
+  -> EitherT (EcologySyncError e ce he ie) m GitRepository
 createRepo apis ciApis customEnv templateHistory params templates p =
   let
     api :: GitPlatformAPI a b m e
@@ -371,11 +377,11 @@ createRepo apis ciApis customEnv templateHistory params templates p =
     pure newRepo
 
 setupNewCI
-  :: forall a b c e i m ce ie g. (MonadIO m)
+  :: forall a b c e i m ce he ie g. (MonadIO m)
   => CIAPIs a i m ce
   -> EcologyParameters
   -> EcologyProject g i a b c
-  -> EitherT (EcologySyncError e ce ie) m (EcologyProjectName, EcologyHashMap)
+  -> EitherT (EcologySyncError e ce he ie) m (EcologyProjectName, EcologyHashMap)
 setupNewCI ciAPIs params project =
   let
     newCIInfo :: NewCIInfo a
@@ -426,7 +432,7 @@ writeDigestStore
   -> BucketName
   -> ObjectKey
   -> EcologyDigestStore
-  -> ExceptT (EcologySyncError e ce ie) m ()
+  -> ExceptT (EcologySyncError e ce he ie) m ()
 writeDigestStore env bucket key store =
   let
     body = toBody
@@ -486,10 +492,11 @@ combineHashes params ciHashes =
         ciHashMap
 
 ecologySync
-  :: forall a b c e g i ce ie m. (Ord g, MonadBracket m, MonadCatch m, MonadIO m)
+  :: forall a b c e g i ce he ie m. (Ord g, MonadBracket m, MonadCatch m, MonadIO m)
   => GitPlatformAPIs g a b m e
   -> CIAPIs a i m ce
   -> IMAPI m ie
+  -> CustomHooks g i a b c m he
   -> (EcologyProject g i a b c -> ChildEnvironment)
   -> GitTemplateHistoryAction
   -> T.Text
@@ -498,9 +505,9 @@ ecologySync
   -> (a -> Maybe GitTemplateRepo)
   -> (i -> T.Text)
   -> [EcologyProject g i a b c]
-  -> EitherT (EcologySyncError e ce ie) m [GitRepository]
+  -> EitherT (EcologySyncError e ce he ie) m [GitRepository]
 --ecologySync v gitAPIs ciAuthCfg ciCfg ciAPI imCfg imAPI templates projects = do
-ecologySync gitAPIs ciAPIs imAPI customEnv templateHistory ecologyBucket' ecologyStateObject' paramPath templates renderCIType projects =
+ecologySync gitAPIs ciAPIs imAPI hooks customEnv templateHistory ecologyBucket' ecologyStateObject' paramPath templates renderCIType projects =
   let
     ecologyBucket :: BucketName
     ecologyBucket = BucketName ecologyBucket'
@@ -517,7 +524,7 @@ ecologySync gitAPIs ciAPIs imAPI customEnv templateHistory ecologyBucket' ecolog
       newHashes = ecologyNewParamHashes . ecologyConfigReport $ report
     logText "Creating new repositories..."
     newResults <- forM (newprojects . ecologyGitReport $ report) $
-      createNewProject gitAPIs ciAPIs customEnv templateHistory params templates
+      createNewProject gitAPIs ciAPIs hooks customEnv templateHistory params templates
     let
       (newRepos, newNames, newDigests) = unzip3 newResults
       newCIHashes = zip newNames newDigests

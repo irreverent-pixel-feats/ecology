@@ -11,4 +11,5 @@ module Irreverent.Ecology.API (module X) where
 
 import Irreverent.Ecology.API.CI as X
 import Irreverent.Ecology.API.Git as X
+import Irreverent.Ecology.API.Hooks as X
 import Irreverent.Ecology.API.IM as X
