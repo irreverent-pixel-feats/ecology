@@ -2,6 +2,14 @@
 
 ## Description
 
+Using a multi-repo approach in software development means you have smaller projects in bite sized portions for newcomers to digest, without having to ignore the noise of the other projects in a mono-repo. The problem with the multi-repo approach is the administrative overhead.  
+
+ecology is a tool for eliminating the administrative overhead of setting up new repos, configuring & maintaining CI and a way to reduce CIaaS [TravisCI, CircleCI, Bitbucket Pipelines] boilerplate.
+
+The boring menial work that ecology automates is replaced with a streamlined collaboration process to determine whether the project should exist or not. 
+
+ecology is an Haskell application. The definition of `EcologyProject` is [here](https://github.com/irreverent-pixel-feats/ecology/blob/1c90cfaf1f003c0441356a297ca1dda3f9a55461/ecology-core/src/Irreverent/Ecology/Core/Data.hs#L328-L340). You'll find an example ecology template for a multiproject haskell project [here](https://github.com/irreverent-pixel-feats/haskell-multiproject.template) 
+
 ### `TL;DR`
 
 Manages and tracks an ecology of projects
@@ -52,6 +60,8 @@ More documentation to come.
 
 ## See Also
 
+- [An ecology template for a multiproject haskell project](https://github.com/irreverent-pixel-feats/haskell-multiproject.template)
+- [ecology launch announcement blog post](http://irreverentpixelfeats.com/posts/development/2018-07-21-ecology.html)
 - [ambiata/anatomy](https://github.com/ambiata/anatomy)
 
 ## Building the lot
