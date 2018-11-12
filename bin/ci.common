@@ -5,6 +5,8 @@ git submodule update
 
 WORKING_DIR=$(pwd)
 
+cabal update
+
 find . -type f -name '*.cabal' | grep -v '^\./lib' | while read P; do
   cd "$(dirname "${P}")"
   ./mafia build
