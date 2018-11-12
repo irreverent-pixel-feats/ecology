@@ -39,6 +39,7 @@ library
 
     exposed-modules:    Irreverent.Ecology.Core
                         Irreverent.Ecology.Core.Data
+                        Irreverent.Ecology.Core.Searches
 
 test-suite              test
     default-language:   Haskell2010
