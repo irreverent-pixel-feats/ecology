@@ -3,7 +3,7 @@ version:            0.0.1
 license:            BSD3
 author:             Dom De Re
 maintainer:         Dom De Re
-copyright:          Copyright (C) 2017
+copyright:          Copyright (C) 2017 - 2019 Irreverent Pixel Feats
 synopsis:           IO operations for ecology
 category:           Data
 description:        IO operations for ecology
@@ -27,10 +27,10 @@ library
                       , bytestring              == 0.10.*
                       , containers
                       , cryptonite              == 0.25.*
-                      , amazonka                == 1.5.*
-                      , amazonka-core           == 1.5.*
-                      , amazonka-s3             == 1.5.*
-                      , amazonka-ssm            == 1.5.*
+                      , amazonka                >= 1.5  &&  < 1.7
+                      , amazonka-core           >= 1.5  &&  < 1.7
+                      , amazonka-s3             >= 1.5  &&  < 1.7
+                      , amazonka-ssm            >= 1.5  &&  < 1.7
                       , domdere-preamble
                       , irreverent-ecology-api
                       , irreverent-ecology-core
